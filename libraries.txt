@@ -1,0 +1,9 @@
+# External Dependencies for WAVENGER 4WD Platform
+Adafruit MPU6050          | >= 2.2.6  | Arduino Library Manager (by Adafruit)
+Adafruit Unified Sensor   | >= 1.1.14 | Arduino Library Manager (by Adafruit)
+
+# Built-in ESP32 Hardware Core Dependencies (Pre-installed)
+# WiFi                    | Built-in  | ESP32 Core (Station Mode & SoftAP)
+# esp_now                 | Built-in  | ESP-IDF / Arduino Peer-to-Peer Protocol
+# WebServer               | Built-in  | Embedded HTTP Request Router
+# Wire                    | Built-in  | Hardware I2C Driver

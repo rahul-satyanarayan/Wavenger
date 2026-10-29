@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wavenger Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1a202c, #111827);
+            color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .container {
+            width: 95%;
+            max-width: 450px;
+            padding: 1.5rem;
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border-radius: 2rem;
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.4),
+                0 5px 10px rgba(0, 0, 0, 0.2),
+                inset 0 0 10px rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        .status-box {
+            background-color: #374151;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #cbd5e0;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .main-controls-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            gap: 1.5rem;
+        }
+        /* Analog Joystick Styles */
+        .joystick {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: grab;
+            touch-action: none;
+            overflow: hidden;
+            align-self: center; /* Center joystick on y-axis */
+        }
+        .joystick-guides {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .joystick-ball {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at center, #63b3ed, #4c51bf);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.5), 
+                0 4px 8px rgba(0, 0, 0, 0.4);
+            user-select: none;
+            z-index: 1;
+        }
+        .joystick-ball.active {
+            background: radial-gradient(circle at center, #4299e1, #5a67d8);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.7),
+                0 2px 4px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95) translate(-50%, -50%);
+        }
+        /* Middle buttons container - perfectly centered */
+        .middle-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        /* Top button row - centered */
+        .top-buttons {
+            display: flex;
+            gap: 4rem;
+            justify-content: center;
+            align-items: center;
+        }
+        .symbol-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #63b3ed, #4299e1);
+            color: #2d3748;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem; 
+            font-weight: bold;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .symbol-button:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .stop-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #f56565, #e53e3e);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .stop-button.glowing {
+            background: linear-gradient(145deg, #ff6b6b, #ff5252);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3), 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(245, 101, 101, 0.6),
+                0 0 40px rgba(245, 101, 101, 0.4),
+                0 0 60px rgba(245, 101, 101, 0.2);
+            transform: scale(1.05);
+        }
+        .stop-button:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        /* Arrow buttons - perfectly centered horizontally */
+        .arrow-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+        .arrow-button {
+            width: 65px;
+            height: 65px;
+            background: none;
+            border: none;
+            color: #63b3ed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+        }
+        .arrow-button:active {
+            transform: scale(0.95);
+        }
+        /* Angular arrows - centered with symmetrical spacing */
+        .angular-arrows-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        .angular-arrow-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            width: 100%;
+        }
+        .angular-arrow-button {
+            width: 60px;
+            height: 60px;
+            background: none;
+            border: none;
+            color: #63b3ed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s;
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+        }
+        .angular-arrow-button:active {
+            transform: scale(0.95);
+        }
+        /* Rotations for angular arrows */
+        .arrow-d { transform: rotate(-45deg); }
+        .arrow-k { transform: rotate(45deg); }
+        .arrow-v { transform: rotate(135deg); }
+        .arrow-n { transform: rotate(-135deg); }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            .main-controls-group {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .top-buttons {
+                gap: 3rem; /* Reduced gap for mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="text-3xl font-bold mb-4">Wavenger Controller</h1>
+    <div id="ipInputContainer" class="w-full">
+        <label for="ipAddress" class="block text-sm font-semibold mb-2 text-gray-400">ESP32 IP Address:</label>
+        <input type="text" id="ipAddress" placeholder="e.g., 192.168.1.123" class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-500 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div id="status" class="status-box">Ready to send command...</div>
+
+    <div class="main-controls-group" id="allControls">
+        <!-- Single Joystick - Centered -->
+        <div class="joystick">
+            <svg class="joystick-guides" viewBox="0 0 150 150">
+                <line x1="75" y1="20" x2="75" y2="130" stroke="#63b3ed" stroke-width="16" stroke-linecap="round" />
+                <line x1="20" y1="75" x2="130" y2="75" stroke="#63b3ed" stroke-width="16" stroke-linecap="round" />
+                <line x1="30" y1="30" x2="120" y2="120" stroke="#63b3ed" stroke-width="16" stroke-linecap="round" />
+                <line x1="30" y1="120" x2="120" y2="30" stroke="#63b3ed" stroke-width="16" stroke-linecap="round" />
+            </svg>
+            <div class="joystick-ball"></div>
+        </div>
+
+        <div class="middle-buttons">
+            <!-- Top symbol buttons - centered -->
+            <div class="top-buttons">
+                <button id="hornBtn" class="symbol-button" data-command="Y">&#x1F50A;</button>
+                <button id="lightBtn" class="symbol-button" data-command="Z">&#x1F4A1;</button>
+            </div>
+            <!-- Arrow buttons with stop - centered -->
+            <div class="arrow-buttons">
+                <button class="arrow-button" data-command="W">&#8592;</button>
+                <button id="stopBtn" class="stop-button" data-command="S">STOP</button>
+                <button class="arrow-button" data-command="X">&#8594;</button>
+            </div>
+            <!-- Angular arrows - centered -->
+            <div class="angular-arrows-group">
+                <div class="angular-arrow-row">
+                    <button class="angular-arrow-button arrow-d" data-command="D">&#9650;</button>
+                    <button class="angular-arrow-button arrow-k" data-command="K">&#9650;</button>
+                </div>
+                <div class="angular-arrow-row">
+                    <button class="angular-arrow-button arrow-v" data-command="V">&#9650;</button>
+                    <button class="angular-arrow-button arrow-n" data-command="N">&#9650;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // UI elements
+        const ipInput = document.getElementById('ipAddress');
+        const statusDiv = document.getElementById('status');
+
+        let lastSentCommand = '';
+        let sendCommandDebounceTimeout;
+
+        // Async function to send a command via Wi-Fi to the ESP32
+        async function sendCommand(command) {
+            const ipAddress = ipInput.value;
+            if (!ipAddress) {
+                statusDiv.textContent = 'ERROR: Please enter a valid IP address.';
+                return;
+            }
+            const url = `http://${ipAddress}/control?command=${encodeURIComponent(command)}`;
+            
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const text = await response.text();
+                    statusDiv.textContent = `Response: ${text}`;
+                } else {
+                    statusDiv.textContent = `ERROR: Status ${response.status}`;
+                }
+            } catch (error) {
+                statusDiv.textContent = `ERROR: Failed to connect to device.`;
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // Function to handle the joystick command logic and send it
+        function sendJoystickCommand(x, y) {
+            let command = 'S'; // Default stop command
+            const deadZone = 10; // Pixels from center to ignore small movements
+
+            if (Math.abs(x) > deadZone || Math.abs(y) > deadZone) {
+                const angle = Math.atan2(y, x);
+                const degrees = angle * 180 / Math.PI;
+
+                // Snap to the nearest 45-degree angle
+                const snappedDegrees = Math.round(degrees / 45) * 45;
+
+                // Map snapped angle to command
+                if (snappedDegrees >= -22.5 && snappedDegrees < 22.5) command = 'R'; // Right
+                else if (snappedDegrees >= 22.5 && snappedDegrees < 67.5) command = 'J'; // Backward-Right
+                else if (snappedDegrees >= 67.5 && snappedDegrees < 112.5) command = 'B'; // Backward
+                else if (snappedDegrees >= 112.5 && snappedDegrees < 157.5) command = 'I'; // Backward-Left
+                else if (snappedDegrees >= 157.5 || snappedDegrees < -157.5) command = 'L'; // Left
+                else if (snappedDegrees >= -157.5 && snappedDegrees < -112.5) command = 'G'; // Forward-Left
+                else if (snappedDegrees >= -112.5 && snappedDegrees < -67.5) command = 'F'; // Forward
+                else if (snappedDegrees >= -67.5 && snappedDegrees < -22.5) command = 'H'; // Forward-Right
+            }
+
+            if (command !== lastSentCommand) {
+                statusDiv.textContent = `Sending Command: ${command}`;
+                sendCommand(command);
+                lastSentCommand = command;
+                
+                // Handle stop button glow based on command
+                const stopButton = document.getElementById('stopBtn');
+                if (command === 'S') {
+                    stopButton.classList.add('glowing');
+                } else {
+                    stopButton.classList.remove('glowing');
+                }
+            }
+        }
+        
+        // Add event listeners for all buttons
+        document.querySelectorAll('[data-command]').forEach(button => {
+            const command = button.dataset.command;
+            const stopButton = document.getElementById('stopBtn');
+            
+            const sendDown = () => {
+                statusDiv.textContent = `Sending: ${command}`;
+                sendCommand(command);
+                
+                // Handle stop button glow effect based on command sent
+                if (command === 'S') {
+                    stopButton.classList.add('glowing');
+                } else {
+                    stopButton.classList.remove('glowing');
+                }
+            }
+            const sendUp = () => {
+                // Only send 'S' on mouse up for directional/motion buttons
+                if (['W', 'X', 'Y', 'Z', 'D', 'K', 'V', 'N'].includes(command)) {
+                    statusDiv.textContent = `Sending: S`;
+                    sendCommand('S');
+                    stopButton.classList.add('glowing'); // Glow when S is sent
+                }
+            }
+            
+            if (command === 'S') {
+                // Stop button only needs a press action
+                button.addEventListener('mousedown', sendDown);
+                button.addEventListener('touchstart', (e) => { e.preventDefault(); sendDown(); });
+            } else {
+                // Other buttons
+                button.addEventListener('mousedown', sendDown);
+                button.addEventListener('mouseup', sendUp);
+                button.addEventListener('touchstart', (e) => { e.preventDefault(); sendDown(); });
+                button.addEventListener('touchend', sendUp);
+            }
+        });
+
+        // Joystick logic
+        const joystick = document.querySelector('.joystick');
+        const ball = joystick.querySelector('.joystick-ball');
+        const joystickRect = joystick.getBoundingClientRect();
+        const joystickRadius = joystickRect.width / 2;
+        const ballRadius = ball.offsetWidth / 2;
+        const center = joystickRadius;
+        const deadZone = 10;
+        
+        const onStart = (e) => {
+            e.preventDefault();
+            ball.classList.add('active');
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onEnd);
+        };
+
+        const onMove = (e) => {
+            e.preventDefault();
+            
+            const rect = joystick.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const x = clientX - rect.left - center;
+            const y = clientY - rect.top - center;
+
+            const distance = Math.sqrt(x * x + y * y);
+
+            let finalX = 0;
+            let finalY = 0;
+
+            if (distance > deadZone) {
+                const angle = Math.atan2(y, x);
+                const snappedAngleRad = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+                const maxDistance = joystickRadius - ballRadius;
+
+                const clampedDistance = Math.min(distance, maxDistance);
+                
+                finalX = clampedDistance * Math.cos(snappedAngleRad);
+                finalY = clampedDistance * Math.sin(snappedAngleRad);
+            }
+
+            ball.style.transform = `translate(calc(-50% + ${finalX}px), calc(-50% + ${finalY}px))`;
+            
+            clearTimeout(sendCommandDebounceTimeout);
+            sendCommandDebounceTimeout = setTimeout(() => {
+                sendJoystickCommand(finalX, finalY);
+            }, 50);
+        };
+
+        const onEnd = () => {
+            const stopButton = document.getElementById('stopBtn');
+            ball.classList.remove('active');
+            ball.style.transform = 'translate(-50%, -50%)';
+            sendJoystickCommand(0, 0); // This will handle the glow effect internally
+
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onEnd);
+        };
+
+        ball.addEventListener('mousedown', onStart);
+        ball.addEventListener('touchstart', onStart, { passive: false });
+
+        ipInput.addEventListener('change', () => {
+            if (ipInput.value.trim() !== '') {
+                sendCommand('ping');
+            }
+        });
+    </script>
+
+</body>
+</html>
